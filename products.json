@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "1",
+    "title": "second",
+    "price": "59",
+    "quantity": "2",
+    "description": "aadhar second",
+    "image": "http://localhost:3030/uploads/PHOTO.jpeg"
+  },
+  {
+    "id": "2",
+    "title": "second",
+    "price": "59",
+    "quantity": "2",
+    "description": "aadhar second",
+    "image": "http://localhost:3030/uploads/kiran pancard.jpg"
+  }
+]
