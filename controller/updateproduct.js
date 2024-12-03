@@ -12,7 +12,6 @@ const readDataFromFile = () => {
 };
 
 const updateProduct = (req, res) => {
-
     const { id } = req.params;
     console.log("Product ID:", id);
 
@@ -21,27 +20,36 @@ const updateProduct = (req, res) => {
     console.log("Uploaded Image:", image);
 
     let productDetails = readDataFromFile();
-    console.log(productDetails)
+    console.log(productDetails);
+
     const product = productDetails.find((prod) => prod.id === id);
-    console.log(product)
+    console.log(product);
 
     if (!product) {
         return res.status(404).send({ message: "Product not found" });
     }
 
-    product.title = title ? title : product.title;
-    product.description = description ? description : product.description;
-    product.price = price ? price : product.price;
-    product.quantity = quantity ? quantity : product.quantity;
+    // Update fields if provided
+    product.title = title || product.title;
+    product.description = description || product.description;
+    product.price = price || product.price;
+    product.quantity = quantity || product.quantity;
 
     if (image) {
+        // Handle image replacement
         if (product.image) {
-            const oldImagePath = `./uploads/${product.image}`
-            if (oldImagePath) {
-                fs.unlinkSync(oldImagePath)
+            const oldImagePath = `./uploads/${product.image.split('/').pop()}`;
+            if (fs.existsSync(oldImagePath)) {
+                try {
+                    fs.unlinkSync(oldImagePath);
+                    console.log("Old image deleted successfully");
+                } catch (error) {
+                    console.error("Error deleting old image:", error);
+                }
             }
         }
-        product.image = image
+        // Update the image URL
+        product.image = `${req.protocol}://${req.get("host")}/uploads/${image}`;
     }
 
     try {
@@ -54,4 +62,3 @@ const updateProduct = (req, res) => {
 };
 
 module.exports = updateProduct;
-
