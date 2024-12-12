@@ -2,8 +2,10 @@
 const Users = require("../model/usersSchema");
 const Product = require("../model/productsSchema");
 const Favourates = require("../model/favourateSchema");
+const mongoose = require("mongoose")
 
 const addFavourate = async (req, res) => {
+
     try {
         const { userId, productId } = req.body;
 
@@ -11,14 +13,22 @@ const addFavourate = async (req, res) => {
             return res.status(400).json({ message: "Please provide both userId and productId" });
         }
 
-        const existuser = await Users.findOne({ _id: userId });
+        if (!mongoose.Types.ObjectId.isValid(userId) || userId.length !== 24) {
+            return res.status(404).json({ message: "invaild user id" })
+        }
 
-        const existproduct = await Product.findOne({ _id: productId });
-        
+        if (!mongoose.Types.ObjectId.isValid(productId) || productId.length !== 24) {
+            return res.status(404).json({ message: "invaild product id" })
+        }
+
+        const existuser = await Users.findById({ _id: userId });
+
+        const existproduct = await Product.findById({ _id: productId });
+
         if (!existuser || !existproduct) {
-            
+
             const message = !existuser ? "User does not exist" : "Product does not exist";
-     
+
             return res.status(400).json({ message: message });
         };
 
@@ -37,30 +47,35 @@ const addFavourate = async (req, res) => {
 
         res.status(201).json({ message: "product added to favouartes", data: fav });
     }
-     catch (error) {
+    catch (error) {
         console.log(error);
         res.status(500).json({ message: " internal server error" })
     }
 }
+
+
 const removeFavourate = async (req, res) => {
+
     try {
-        const {userId} = req.params;
- 
-       //    favourate id is passing in the params
+        const { favorateId } = req.params;
 
-        const findfavourate = await Favourates.findOneAndDelete({_id:userId });
-
-        if( !userId || ! findfavourate   ){
-
-            const message = !userId ? "userId not found" : "Favourate not found" 
-
-            return res.status(400).json({ message:message });
+        if (!mongoose.Types.ObjectId.isValid(favorateId) || favorateId.length !== 24) {
+            return res.status(404).json({ message: "invaild favorate id" })
         }
-        
+
+        const findfavourate = await Favourates.findOneAndDelete({ _id: favorateId });
+
+        if (!favorateId || !findfavourate) {
+
+            const message = !userId ? "userId not found" : "Favourate not found"
+
+            return res.status(400).json({ message: message });
+        }
+
         res.status(200).json({ message: "product removed from favourites", findfavourate });
 
     } catch (error) {
-        
+
         console.log(error);
 
         res.status(500).json({ message: " internal server error" })
@@ -70,32 +85,35 @@ const removeFavourate = async (req, res) => {
 const getFavourates = async (req, res) => {
 
     try {
-        const {userId} = req.params;
 
-        if (!userId) {
-            return res.status(404).json({ message: "User id is required" });
+        // Extract user ID from req.user set by verifytoken middleware
+
+        const userId = req.user.id;
+
+        if (!mongoose.Types.ObjectId.isValid(userId) || userId.length !== 24) {
+            return res.status(404).json({ message: "invaild favorate id" })
         }
 
-        const existuser = await Users.findById({ _id:userId });
+        const existUser = await Users.findById(userId);
 
-        if (!existuser) {
+        if (!existUser) {
             return res.status(404).json({ message: "User not found" });
         }
-        const fav = await Favourates.find({ userId: userId });
-        
-        if(!fav){
+
+        const fav = await Favourates.find({ userId });
+
+        if (!fav || fav.length === 0) {
             return res.status(404).json({ message: "No favourite product found" });
         }
 
-        res.status(200).json({ message: "fetched all favourates", fav });
-
+        res.status(200).json({ message: "Fetched all favourites", fav });
     }
     catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
 
-        console.log(error);
-
-        res.status(500).json({ message: " internal server error" })
     }
-}
+};
+
 
 module.exports = { addFavourate, removeFavourate, getFavourates };

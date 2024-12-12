@@ -1,28 +1,39 @@
 const multer = require("multer");
+const fs = require("fs");
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, "uploads")
+        const directory = "uploads";
+        if (!fs.existsSync(directory)) {
+            fs.mkdirSync(directory, { recursive: true });
+        }
+        cb(null, directory);
     },
     filename: function (req, file, cb) {
-        const uniquepath = `${file.originalname}`
-        cb(null, uniquepath)
-    }
-})
+        const timestamp = Date.now();
+        const uniqueName = `${timestamp}-${file.originalname}`;
+        cb(null, uniqueName);
+    },
+});
+
+
 
 const fileFilter = (req, file, cb) => {
-    const allowedtypes = ["image/jpg", "image/png", "image/jpeg"]
-    if (allowedtypes.includes(file.mimetype)) {
-        cb(null, true)
+    const allowedTypes = ["image/jpg", "image/png", "image/jpeg"];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true); // Accept the file
     } else {
-       cb(new Error("only jpeg ,jpg ,png are allowed"),false)
+        // Create a custom error for unsupported file types
+        const error = new Error("Unsupported file type. Only jpeg, jpg, and png are allowed.");
+        error.code = "UNSUPPORTED_FILE_TYPE"; // Custom error code
+        cb(error, false); // Reject the file
     }
-}
+};
+
 const upload = multer({
     storage,
     fileFilter,
-    limits:{
-        fileSize:2 * 1024 * 1024
-    }
-})
-module.exports = upload
+    limits: { fileSize: 1 * 1024 * 1024 }, // 2MB limit
+});
+
+module.exports = upload;

@@ -11,6 +11,12 @@ const Signup = async (req, res) => {
             return res.status(400).json({ message: "Please fill in all fields" });
         }
 
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Invalid email format" });
+        }
+
         const existingUser = await Users.findOne({ email });
 
         if (existingUser) {
@@ -29,14 +35,15 @@ const Signup = async (req, res) => {
 
         await user.save();
 
-        const saved={
-            username:user.username,
-            email:user.email,
-            role:user.role,
-        }
-       
+        const saved = {
+            username: user.username,
+            email: user.email,
+            role: user.role,
+        };
+
         res.status(201).json({
-            message: "Signup successful", saved
+            message: "Signup successful",
+            saved,
         });
     } catch (error) {
         console.log("Error during signup:", error);
@@ -44,15 +51,18 @@ const Signup = async (req, res) => {
     }
 };
 
-
 const Login = async (req, res) => {
-
     try {
-
         const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({ message: "Please fill in all fields" });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Invalid email format" });
         }
 
         const checkuser = await Users.findOne({ email });
@@ -62,21 +72,22 @@ const Login = async (req, res) => {
         }
 
         const checkpassword = await bcrypt.compare(password, checkuser.password);
-        
 
         if (!checkpassword) {
-
             return res.status(400).json({ message: "Password is incorrect" });
         }
 
-        const token = jwt.sign({ id: checkuser.id, username: checkuser.username, role: checkuser.role }, "secretkey123", { expiresIn: "1d" })
+        const token = jwt.sign(
+            { id: checkuser.id, username: checkuser.username, role: checkuser.role },
+            "secretkey123",
+            { expiresIn: "1d" }
+        );
 
-        res.status(200).json({ message: "logged succesfully", token: token, email: checkuser.email })
+        res.status(200).json({ message: "Logged in successfully", token, email: checkuser.email });
+    } catch (error) {
+        console.log("Error during login:", error);
+        res.status(500).json({ message: "Error in logging in" });
     }
-    catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error in signing up" });
-    }
-}
+};
 
 module.exports = { Signup, Login };
